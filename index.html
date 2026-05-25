@@ -570,7 +570,7 @@
                 function scrollStep() {
                     if (!isPlaying) return;
                     
-                    currentPosition += currentScrollSpeed;
+                    currentPosition += currentScrollSpeed * 0.2;
                     if (currentPosition >= maxScroll) {
                         currentPosition = maxScroll;
                         prompterDisplay.style.transform = `translateY(-${currentPosition}px)`;
@@ -693,7 +693,7 @@
 
                 function scrollStep() {
                     if (!isPlaying) return;
-                    currentPosition += currentScrollSpeed;
+                    currentPosition += currentScrollSpeed * 0.2;
                     if (currentPosition >= maxScroll) {
                         currentPosition = maxScroll;
                         prompterDisplay.style.transform = `translateY(-${currentPosition}px)`;
