@@ -200,9 +200,6 @@
             border-radius: 12px;
             padding: 40px 20px;
             min-height: 400px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             position: relative;
             overflow: hidden;
             box-shadow: 0 8px 30px rgba(0,0,0,0.5);
@@ -212,8 +209,11 @@
             font-weight: 600;
             line-height: 1.8;
             text-align: center;
-            transition: all 0.3s ease;
-            max-width: 90%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 40px 20px;
             word-wrap: break-word;
         }
 
@@ -404,6 +404,7 @@
         let animationId = null;
         let speechRecognition = null;
         let isSpeechSupported = false;
+        let currentScrollSpeed = 1.5; // 默认速度，供动画帧实时读取
         
         // DOM 元素
         const textInput = document.getElementById('text-input');
@@ -548,9 +549,6 @@
                 return;
             }
             
-            isPlaying = true;
-            updateStatus('滚动中', 'active');
-            
             const lineWidth = parseInt(lineWidthSlider.value);
             const fontSize = parseInt(fontSizeSlider.value);
             const speed = parseInt(speedSlider.value);
@@ -562,35 +560,44 @@
             const formattedText = formatTextToLineWidth(text, lineWidth);
             prompterDisplay.textContent = formattedText;
             
-            // 计算滚动参数
-            const containerHeight = document.querySelector('.prompter-section').clientHeight;
-            const textHeight = prompterDisplay.scrollHeight;
-            const maxScroll = textHeight - containerHeight;
-            
-            if (maxScroll <= 0) {
-                prompterDisplay.style.transform = 'translateY(0)';
-                return;
-            }
-            
-            currentPosition = 0;
-            const scrollSpeed = 0.5 + (speed * 0.3); // 速度范围：0.8-3.5像素/帧
-            
-            function scrollStep() {
-                if (!isPlaying) return;
+            // 等待浏览器完成布局再测量
+            requestAnimationFrame(() => {
+                const prompterSection = document.querySelector('.prompter-section');
+                const containerHeight = prompterSection.clientHeight;
+                const textHeight = prompterDisplay.scrollHeight;
+                const maxScroll = textHeight - containerHeight;
                 
-                currentPosition += scrollSpeed;
-                if (currentPosition >= maxScroll) {
-                    currentPosition = maxScroll;
-                    isPlaying = false;
-                    updateStatus('已到底部', '');
+                if (maxScroll <= 0) {
+                    prompterDisplay.style.transform = 'translateY(0)';
+                    isPlaying = true;
+                    updateStatus('文本较短，无需滚动', 'active');
                     return;
                 }
                 
-                prompterDisplay.style.transform = `translateY(-${currentPosition}px)`;
+                isPlaying = true;
+                updateStatus('滚动中', 'active');
+                
+                currentPosition = 0;
+                currentScrollSpeed = 0.3 + (speed - 1) * 0.3; // 速度范围：0.3-3.0像素/帧
+                
+                function scrollStep() {
+                    if (!isPlaying) return;
+                    
+                    currentPosition += currentScrollSpeed;
+                    if (currentPosition >= maxScroll) {
+                        currentPosition = maxScroll;
+                        prompterDisplay.style.transform = `translateY(-${currentPosition}px)`;
+                        isPlaying = false;
+                        updateStatus('已到底部', '');
+                        return;
+                    }
+                    
+                    prompterDisplay.style.transform = `translateY(-${currentPosition}px)`;
+                    animationId = requestAnimationFrame(scrollStep);
+                }
+                
                 animationId = requestAnimationFrame(scrollStep);
-            }
-            
-            animationId = requestAnimationFrame(scrollStep);
+            });
         }
 
         // 暂停滚动
@@ -682,15 +689,40 @@
         fontSizeSlider.addEventListener('input', function() {
             fontSizeValue.textContent = this.value + 'px';
             prompterDisplay.style.fontSize = this.value + 'px';
+            // 如果正在滚动，重新计算并继续滚动
+            if (isPlaying) {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+                const prompterSection = document.querySelector('.prompter-section');
+                const containerHeight = prompterSection.clientHeight;
+                const textHeight = prompterDisplay.scrollHeight;
+                const maxScroll = textHeight - containerHeight;
+                const speed = parseInt(speedSlider.value);
+                currentScrollSpeed = 0.3 + (speed - 1) * 0.3;
+
+                function scrollStep() {
+                    if (!isPlaying) return;
+                    currentPosition += currentScrollSpeed;
+                    if (currentPosition >= maxScroll) {
+                        currentPosition = maxScroll;
+                        prompterDisplay.style.transform = `translateY(-${currentPosition}px)`;
+                        isPlaying = false;
+                        updateStatus('已到底部', '');
+                        return;
+                    }
+                    prompterDisplay.style.transform = `translateY(-${currentPosition}px)`;
+                    animationId = requestAnimationFrame(scrollStep);
+                }
+                animationId = requestAnimationFrame(scrollStep);
+            }
         });
 
         speedSlider.addEventListener('input', function() {
             speedValue.textContent = this.value;
-            // 如果正在播放，调整速度
-            if (isPlaying) {
-                pauseScrolling();
-                startScrolling();
-            }
+            // 实时更新滚动速度（动画帧会读取 currentScrollSpeed）
+            currentScrollSpeed = 0.3 + (parseInt(this.value) - 1) * 0.3;
         });
 
         startBtn.addEventListener('click', startScrolling);
