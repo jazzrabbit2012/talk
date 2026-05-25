@@ -214,7 +214,10 @@
             left: 0;
             right: 0;
             padding: 40px 20px;
+            max-width: 55ch;
+            margin: 0 auto;
             word-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .status-indicator {
@@ -518,41 +521,9 @@
             }
         }
 
-        // 格式化文本为指定行宽（支持中英文混排）
-        function formatTextToLineWidth(text, lineWidth) {
-            if (!text) return '';
-            
-            // 先按换行符分段，保留用户手动换行
-            const paragraphs = text.split('\n');
-            let resultLines = [];
-            
-            for (const para of paragraphs) {
-                if (!para.trim()) {
-                    resultLines.push('');
-                    continue;
-                }
-                
-                let currentLine = '';
-                let currentWidth = 0; // 中文字符算2，英文/数字算1
-                
-                for (const ch of para) {
-                    const isCJK = /[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/.test(ch);
-                    const charWidth = isCJK ? 2 : 1;
-                    
-                    if (currentWidth + charWidth > lineWidth) {
-                        if (currentLine) resultLines.push(currentLine);
-                        currentLine = ch;
-                        currentWidth = charWidth;
-                    } else {
-                        currentLine += ch;
-                        currentWidth += charWidth;
-                    }
-                }
-                
-                if (currentLine) resultLines.push(currentLine);
-            }
-            
-            return resultLines.join('\n');
+        // 更新行宽（CSS max-width）
+        function updateLineWidth(lineWidth) {
+            prompterDisplay.style.maxWidth = lineWidth + 'ch';
         }
 
         // 开始滚动
@@ -571,10 +542,10 @@
             
             // 应用样式
             prompterDisplay.style.fontSize = fontSize + 'px';
+            updateLineWidth(lineWidth);
             
-            // 格式化文本
-            const formattedText = formatTextToLineWidth(text, lineWidth);
-            prompterDisplay.textContent = formattedText;
+            // 显示原始文本，行宽由 CSS max-width 控制
+            prompterDisplay.textContent = text;
             
             // 等待浏览器完成布局再测量
             requestAnimationFrame(() => {
@@ -694,8 +665,10 @@
 
         // 事件监听器
         lineWidthSlider.addEventListener('input', function() {
-            lineWidthValue.textContent = this.value;
-            // 如果正在播放，重新格式化文本
+            const width = parseInt(this.value);
+            lineWidthValue.textContent = width;
+            updateLineWidth(width);
+            // 如果正在播放，重新测量并继续滚动
             if (isPlaying) {
                 pauseScrolling();
                 startScrolling();
@@ -749,6 +722,7 @@
         // 页面加载时检查兼容性
         document.addEventListener('DOMContentLoaded', function() {
             checkCompatibility();
+            updateLineWidth(parseInt(lineWidthSlider.value));
             
             // 添加示例文本
             textInput.value = `尊敬的各位来宾，大家好！
