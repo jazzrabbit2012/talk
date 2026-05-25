@@ -518,25 +518,41 @@
             }
         }
 
-        // 格式化文本为指定行宽
+        // 格式化文本为指定行宽（支持中英文混排）
         function formatTextToLineWidth(text, lineWidth) {
             if (!text) return '';
             
-            const words = text.split(/\s+/);
-            let lines = [];
-            let currentLine = '';
+            // 先按换行符分段，保留用户手动换行
+            const paragraphs = text.split('\n');
+            let resultLines = [];
             
-            for (const word of words) {
-                if ((currentLine + ' ' + word).length <= lineWidth) {
-                    currentLine = currentLine ? currentLine + ' ' + word : word;
-                } else {
-                    if (currentLine) lines.push(currentLine);
-                    currentLine = word;
+            for (const para of paragraphs) {
+                if (!para.trim()) {
+                    resultLines.push('');
+                    continue;
                 }
+                
+                let currentLine = '';
+                let currentWidth = 0; // 中文字符算2，英文/数字算1
+                
+                for (const ch of para) {
+                    const isCJK = /[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/.test(ch);
+                    const charWidth = isCJK ? 2 : 1;
+                    
+                    if (currentWidth + charWidth > lineWidth) {
+                        if (currentLine) resultLines.push(currentLine);
+                        currentLine = ch;
+                        currentWidth = charWidth;
+                    } else {
+                        currentLine += ch;
+                        currentWidth += charWidth;
+                    }
+                }
+                
+                if (currentLine) resultLines.push(currentLine);
             }
             
-            if (currentLine) lines.push(currentLine);
-            return lines.join('\n');
+            return resultLines.join('\n');
         }
 
         // 开始滚动
