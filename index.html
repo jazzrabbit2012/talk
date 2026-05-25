@@ -44,7 +44,7 @@
             flex-direction: column;
             gap: 30px;
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 30px auto 0;
             width: 100%;
         }
 
@@ -195,7 +195,7 @@
         }
 
         .prompter-section {
-            margin-top: 40px;
+            margin-top: 20px;
             background: #000;
             border-radius: 12px;
             padding: 40px 20px;
@@ -335,6 +335,22 @@
         <p>语音跟随滚动 | 响应式设计 | 无需安装</p>
     </div>
 
+    <div class="prompter-section">
+        <div class="voice-status">
+            <div class="mic-icon" id="mic-icon"></div>
+            <span id="voice-status-text">语音识别未启动</span>
+        </div>
+        
+        <div class="status-indicator">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text">准备就绪</span>
+        </div>
+        
+        <div id="prompter-display">
+            请输入台词内容，然后点击"开始滚动"
+        </div>
+    </div>
+
     <div class="container">
         <div class="input-section">
             <h2>📝 输入台词</h2>
@@ -375,22 +391,6 @@
             <div class="compatibility-warning" id="compatibility-warning">
                 ⚠️ 语音识别功能需要 Chrome/Edge 浏览器支持。其他浏览器可能无法使用语音跟随功能。
             </div>
-        </div>
-    </div>
-
-    <div class="prompter-section">
-        <div class="voice-status">
-            <div class="mic-icon" id="mic-icon"></div>
-            <span id="voice-status-text">语音识别未启动</span>
-        </div>
-        
-        <div class="status-indicator">
-            <div class="status-dot" id="status-dot"></div>
-            <span id="status-text">准备就绪</span>
-        </div>
-        
-        <div id="prompter-display">
-            请输入台词内容，然后点击"开始滚动"
         </div>
     </div>
 
